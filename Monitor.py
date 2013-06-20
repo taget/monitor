@@ -34,7 +34,7 @@ logger = logger("main.log")
 max_loop = 100
 sleep_time = 100
 
-
+# todo 
 def compute_loop_time():
 	return sleep_time
 
@@ -62,7 +62,7 @@ def main():
 		except:
 			logger.info("send error!")
 		cap.remove_img()
-		time.sleep(sleep_time)
+		time.sleep(compute_loop_time())
         
 	logger.info("finished, quit!")
 	return 0

@@ -57,8 +57,9 @@ class WeiboInterface:
 		#msg = self._client.statuses__friends_timeline()
 		#print msg
 		msg = self._client.statuses.user_timeline.get()
-		#return 1
-		msg_list = message_list(msg)
+		print msg
+		return 1
+		#msg_list = message_list(msg)
 
 		i = 0
 		while i < msg_list.get_msg_count():
