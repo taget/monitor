@@ -4,15 +4,14 @@
 return message_list
 1 message_list contain some messages
 '''
-from Json import JsonProcessor
+import weibo
 from message import message
 class message_list:
 	def __init__(self, msg):
 		self._msg = msg
-		self._jsonprocessor = JsonProcessor()
-		self._statuses = self._jsonprocessor.Parse_get_text_from_json(self._msg, 'statuses')
+		self._statuses = msg.__getattr__('statuses')
 		self._len = len(self._statuses)
-		self._msg_list = []
+                self._msg_list = []
 		i = 0
 		while i < self._len:
 			self._msg_list.append(message(self._statuses[i]))

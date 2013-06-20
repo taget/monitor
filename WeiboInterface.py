@@ -25,9 +25,16 @@ app_key = '35587412'
 app_secret = '1b054a023d36fbacd3e26a5b723baf4d'
 r_url = 'https://api.weibo.com/oauth2/default.html'
 
+import types
 import time,os,sys
 from logger import logger
 from Readcode import ReadCode
+
+
+reload(sys)
+sys.setdefaultencoding('utf8') 
+
+print sys.getdefaultencoding()
 
 logger = logger("main.log")
 
@@ -45,11 +52,11 @@ class WeiboInterface:
 		self._client = APIClient(app_key, app_secret, r_url)
 		url = self._client.get_authorize_url()
 		print url
-		print "please echo \$code > code.data in another shell"
+		print "please echo $code to code.data in another shell"
 		rd = ReadCode()
 		code = rd.get_code()
 		# todo need to check code
-		print code
+		print "your code is %s" % code
 		r = self._client.request_access_token(code)
 		self._client.set_access_token(r.access_token, r.expires_in)
 	
@@ -57,9 +64,10 @@ class WeiboInterface:
 		#msg = self._client.statuses__friends_timeline()
 		#print msg
 		msg = self._client.statuses.user_timeline.get()
-		print msg
-		return 1
-		#msg_list = message_list(msg)
+		#dmsg = msg.encode('gb2312')
+		print type(msg)
+		#return 1
+		msg_list = message_list(msg)
 
 		i = 0
 		while i < msg_list.get_msg_count():
@@ -67,15 +75,9 @@ class WeiboInterface:
 			usr = msg.msg_user()
 			retweeted_msg = msg.msg_retweeted_status()
 			if retweeted_msg == None:
-				format_msg(i, ':[',usr.get_user_name(),\
-                                ']:[', msg.msg_text(), ']')
+				print usr.get_user_name().decode('utf-8').encode('gb2312')
 			else:
 				re_usr = retweeted_msg.msg_user()
-				format_msg(i,':[',usr.get_user_name(),\
-                                ']:[', msg.msg_text(),']')
-				format_msg('----origin message:---- \
-                                [', re_usr.get_user_name(), ']:[',\
-                                retweeted_msg.msg_text(),']')
 			i = i + 1
 	def uploade_img(self, file_path):
 		self._ret_msg = self._client.upload.statuses__upload( \
