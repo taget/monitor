@@ -30,11 +30,8 @@ import time,os,sys
 from logger import logger
 from Readcode import ReadCode
 
-
 reload(sys)
 sys.setdefaultencoding('utf8') 
-
-print sys.getdefaultencoding()
 
 logger = logger("main.log")
 
@@ -43,7 +40,7 @@ from message_list import message_list
 
 def format_msg(*arg):
         for x in arg:
-                print x,
+                print x.decode(),
         print ''
 
 class WeiboInterface:
@@ -56,29 +53,35 @@ class WeiboInterface:
 		rd = ReadCode()
 		code = rd.get_code()
 		# todo need to check code
-		print "your code is %s" % code
-		r = self._client.request_access_token(code)
-		self._client.set_access_token(r.access_token, r.expires_in)
+		logger.info("your code is %s" %code )
+		try:
+			r = self._client.request_access_token(code)
+			self._client.set_access_token(r.access_token, r.expires_in)
+		except:
+			logger.error("code error!")
+			exit(1)
 	
 	def get_msg(self):
-		#msg = self._client.statuses__friends_timeline()
-		#print msg
-		msg = self._client.statuses.user_timeline.get()
-		#dmsg = msg.encode('gb2312')
-		print type(msg)
-		#return 1
+		msg = self._client.statuses__friends_timeline()
 		msg_list = message_list(msg)
-
 		i = 0
 		while i < msg_list.get_msg_count():
 			msg = msg_list.get_message(i)
 			usr = msg.msg_user()
 			retweeted_msg = msg.msg_retweeted_status()
-			if retweeted_msg == None:
-				print usr.get_user_name().decode('utf-8').encode('gb2312')
-			else:
+			
+			usr_name = usr.get_user_name()
+			msg_text = msg.msg_text()
+			format_msg("[", usr_name, "] : " , msg_text)
+			if not retweeted_msg == None:		
 				re_usr = retweeted_msg.msg_user()
+				re_usr_name = re_usr.get_user_name()
+				format_msg('----原文转发---- [', \
+					re_usr.get_user_name(), ']:[',\
+					retweeted_msg.msg_text(),']')
+				
 			i = i + 1
+
 	def uploade_img(self, file_path):
 		self._ret_msg = self._client.upload.statuses__upload( \
 		             status='uploaded at ' + str(time.time()),\

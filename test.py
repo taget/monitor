@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  test.py
-#  
+#
 
 import sys
 import os

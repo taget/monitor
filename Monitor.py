@@ -28,16 +28,23 @@ import os
 import time
 from logger import logger
 from WeiboInterface import WeiboInterface
+from config import config
 
-logger = logger("main.log")
+class monitor:
+	def __init__(self):
+		self._conf = config()
+		self._cap = CapImage(0)
+		
+		self._max_loop = 100
+		self._sleep_time = 100
+		self._logger = logger("main.log")
 
-max_loop = 100
-sleep_time = 100
+	def compute_sleep_time():
+		# to do
+		return self._sleep_time
 
-# todo 
-def compute_loop_time():
-	return sleep_time
-
+	def main_loop():
+	
 def main():
 	# capiture device 1 [we have 0,1]
 	cap = CapImage(0)
