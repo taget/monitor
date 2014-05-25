@@ -26,54 +26,73 @@ from Capimage import CapImage
 import sys
 import os
 import time
-from logger import logger
+import log
 from WeiboInterface import WeiboInterface
-from config import config
 
-class monitor:
-	def __init__(self):
-		self._conf = config()
-		self._cap = CapImage(0)
-		
-		self._max_loop = 100
-		self._sleep_time = 100
-		self._logger = logger("main.log")
 
-	def compute_sleep_time():
-		# to do
-		return self._sleep_time
+import util
 
-	def main_loop():
-	
-def main():
+logger = log.getLogger("montior")
+
+def cap_and_send_to_weibo():
 	# capiture device 1 [we have 0,1]
-	cap = CapImage(0)
-	weibo = WeiboInterface()
+    cap = CapImage(0)
+    weibo = WeiboInterface()
 
-	looper = 0
+    looper = 0
 
-	while looper < max_loop:
-		looper = looper + 1
+    while looper < max_loop:
+        looper = looper + 1
 
-		path = cap.getimage_path()
-		try:
-			cap.capimage(path)
-			logger.info(path)
-		except:
-			logger.info('error to cap a image')
-			continue
-
-		try:
-			weibo.uploade_img(path)
-			logger.info("send to weibo")
-		except:
-			logger.info("send error!")
-		cap.remove_img()
-		time.sleep(compute_loop_time())
+        path = cap.getimage_path()
+        try:
+            cap.capimage(path)
+            logger.info(path)
+        except:
+            logger.info('error to cap a image')
+            continue
+        try:
+            weibo.uploade_img(path)
+            logger.info("send to weibo")
+        except:
+            logger.info("send error!")
+        cap.remove_img()
+        time.sleep(compute_loop_time())
         
-	logger.info("finished, quit!")
-	return 0
+    logger.info("finished, quit!")
+    return 0
+
+def cap_to_local_dir(dir='./', sleep_time=60):
+    logger = log.getLogger("montior")
+    logger.info("staring capture")
+    cap = CapImage(0, dir)
+    old_path = None
+    while True:
+        path = cap.getimage_path()
+        if old_path == None:
+            old_path = path
+        try:
+            logger.debug("cap image to [%s]" % path)
+            # TODO need to compare with last image.
+            # if they are same(means static image)
+            # do not save the new captured image
+            cap.capimage(path)
+            print path
+            print old_path
+            print cap.imgcompare(old_path, path)
+            if cap.imgcompare(old_path, path) > 0.97 and old_path != path:
+                logger.debug("image is similar with old one, remove it")
+                cap.remove_img(path)
+            else:
+                old_path = path
+        except:
+            logger.debug("cap image error [%s]" % path)
+            old_path = None
+        time.sleep(sleep_time)
+
 
 if __name__ == '__main__':
-	main()
+	#
+    #main()
+    cap_to_local_dir(dir='/home/pi/images/',sleep_time=1)
 

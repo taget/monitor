@@ -24,6 +24,10 @@ def remove_img(file):
 	
 logger = logger("main.log")
 
+def test():
+	img_file = 'tmp.jpg'
+	path = cap_img(img_file)
+
 def main():
 	img_file = 'tmp.jpg'
         weibo = WeiboInterface()
@@ -32,4 +36,5 @@ def main():
 	remove_img(path)
 
 if __name__ == '__main__':
-        main()    
+    test()    
+	#main()
