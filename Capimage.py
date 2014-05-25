@@ -4,6 +4,7 @@
 import cv
 import os, time
 import log
+import util
 
 class CapImage:
 	
@@ -35,21 +36,12 @@ class CapImage:
             self._logger.error("Capture image error!")
             return None
 
-    def _getsystime(self):
-        return str(time.time())
 		
     def getimage_path(self):
         path = ".jpg"
-        path = self._getsystime() + path
+        path = util.get_systime() + path
         self._saved_path = self._saved_dir + path
         return self._saved_path
-	
-    def remove_img(self, path):
-        if os.path.exists(path):
-            os.remove(path)
-            return True
-        else:
-            return False
 
     def _createHist(self, img):
         b_plane = cv.CreateImage((img.width,img.height), 8, 1)

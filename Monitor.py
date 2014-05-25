@@ -77,12 +77,9 @@ def cap_to_local_dir(dir='./', sleep_time=60):
             # if they are same(means static image)
             # do not save the new captured image
             cap.capimage(path)
-            print path
-            print old_path
-            print cap.imgcompare(old_path, path)
             if cap.imgcompare(old_path, path) > 0.97 and old_path != path:
                 logger.debug("image is similar with old one, remove it")
-                cap.remove_img(path)
+                util.remove_file(path)
             else:
                 old_path = path
         except:

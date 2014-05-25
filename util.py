@@ -11,13 +11,24 @@ import gzip
 import string 
 import shutil
 import traceback
-
+import time
 
 class UtilException(Exception):
     def __init__(self, msg):
         self.msg = msg
-    
-    
+
+# return str of system time
+def get_systime():
+    return str(time.time())
+
+# remove a file    
+def remove_file(path):
+    if os.path.exists(path):
+        os.remove(path)
+        return True
+    else:
+        raise UtilException('%s is not exists ' % path)
+        
 # linux
 #src : src dir
 #dst : dst dir
