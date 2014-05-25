@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+#sudo apt-get install python-opencv
 import cv
 import os, time
 import log
