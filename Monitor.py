@@ -66,27 +66,13 @@ def cap_and_send_to_weibo():
     return 0
 
 def cap_to_local_dir(cap):
-    logger = log.getLogger("montior")
-    logger.info("staring capture")
-    old_path = None
-    
     path = cap.getimage_path()
-    if old_path == None:
-        old_path = path
     try:
-        logger.debug("cap image to [%s]" % path)
-        # TODO need to compare with last image.
-        # if they are same(means static image)
-        # do not save the new captured image
         cap.capimage(path)
-        if cap.imgcompare(old_path, path) > 0.97 and old_path != path:
-            logger.debug("image is similar with old one, remove it")
-            util.remove_file(path)
-        else:
-            old_path = path
     except:
-        logger.debug("cap image error [%s]" % path)
-        old_path = None
+        logger.error("cap image error [%s]" % path)
+        return None
+    return path
 
 # check the dir size every sleep_time
 # 
@@ -95,7 +81,6 @@ def archive_to_tgz (srcdir='./', destdir= '/home/pi/', fold_size = 3 * 1024 *102
     
     size = util.get_FolderSize(srcdir)
     failed = 0
-    print size
     if size > fold_size:
         # need to archive
         tgz_name = destdir + '/' + util.get_systime() + '.tgz'
@@ -128,9 +113,23 @@ class cap_Thread(threading.Thread):
         
     def run(self):
         print "Starting capture" + self.dirname
+        old_path = None
         while True:
             threadLock.acquire()
-            cap_to_local_dir(self.cap)
+            path = cap_to_local_dir(self.cap)
+            if not path == None:
+                if old_path == None:
+                    old_path = path
+                if self.cap.imgcompare(old_path, path) > 0.97 and \
+                   not old_path == path:
+                    logger.debug("image is similar with old one, remove it")
+                    util.remove_file(path)
+                else:
+                    logger.debug("image saved to %s" % path)
+                    old_path =  path
+            else:
+                logger.error("capture image error!")
+                old_path = None
             threadLock.release()
             time.sleep(self.sleep_time)
 
@@ -147,7 +146,7 @@ class archive_Trhead(threading.Thread):
         self.sleep_time = sleep_time
         
     def run(self):
-         print "Starting Archive..." + self.srcname
+         print "Starting Archive service... " + self.srcname
          while True:
             threadLock.acquire()
             filename = archive_to_tgz(self.srcname, self.destdir, self.size)
@@ -158,7 +157,8 @@ class archive_Trhead(threading.Thread):
          
 def test():
     thread_cap = cap_Thread("/home/pi/images/", 2)
-    thread_archive = archive_Trhead("/home/pi/images/", '/home/pi/', 3*100*100)
+    thread_archive = archive_Trhead("/home/pi/images/", '/home/pi/', 3*1024*1024,\
+                    sleep_time = 10*60)
     thread_cap.start()
     thread_archive.start()
     
