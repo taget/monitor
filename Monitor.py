@@ -120,13 +120,20 @@ class cap_Thread(threading.Thread):
             if not path == None:
                 if old_path == None:
                     old_path = path
-                if self.cap.imgcompare(old_path, path) > 0.97 and \
-                   not old_path == path:
-                    logger.debug("image is similar with old one, remove it")
-                    util.remove_file(path)
-                else:
-                    logger.debug("image saved to %s" % path)
-                    old_path =  path
+                try:
+                    if self.cap.imgcompare(old_path, path) > 0.97 and \
+                    not old_path == path:
+                        logger.debug("image is similar with old one, remove it")
+                        util.remove_file(path)
+                    else:
+                        logger.debug("image saved to %s" % path)
+                        old_path =  path
+                except:
+                    # work around after archive old_path is not exist
+                    threadLock.release()
+                    old_path = None
+                    time.sleep(self.sleep_time)
+                    continue
             else:
                 logger.error("capture image error!")
                 old_path = None
