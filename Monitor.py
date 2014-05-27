@@ -26,6 +26,8 @@ from Capimage import CapImage
 import sys
 import os
 import time
+import threading
+
 import log
 from WeiboInterface import WeiboInterface
 
@@ -33,6 +35,7 @@ from WeiboInterface import WeiboInterface
 import util
 
 logger = log.getLogger("montior")
+threadLock = threading.Lock()
 
 def cap_and_send_to_weibo():
 	# capiture device 1 [we have 0,1]
@@ -62,34 +65,110 @@ def cap_and_send_to_weibo():
     logger.info("finished, quit!")
     return 0
 
-def cap_to_local_dir(dir='./', sleep_time=60):
+def cap_to_local_dir(cap):
     logger = log.getLogger("montior")
     logger.info("staring capture")
-    cap = CapImage(0, dir)
     old_path = None
-    while True:
-        path = cap.getimage_path()
-        if old_path == None:
+    
+    path = cap.getimage_path()
+    if old_path == None:
+        old_path = path
+    try:
+        logger.debug("cap image to [%s]" % path)
+        # TODO need to compare with last image.
+        # if they are same(means static image)
+        # do not save the new captured image
+        cap.capimage(path)
+        if cap.imgcompare(old_path, path) > 0.97 and old_path != path:
+            logger.debug("image is similar with old one, remove it")
+            util.remove_file(path)
+        else:
             old_path = path
-        try:
-            logger.debug("cap image to [%s]" % path)
-            # TODO need to compare with last image.
-            # if they are same(means static image)
-            # do not save the new captured image
-            cap.capimage(path)
-            if cap.imgcompare(old_path, path) > 0.97 and old_path != path:
-                logger.debug("image is similar with old one, remove it")
-                util.remove_file(path)
-            else:
-                old_path = path
-        except:
-            logger.debug("cap image error [%s]" % path)
-            old_path = None
-        time.sleep(sleep_time)
+    except:
+        logger.debug("cap image error [%s]" % path)
+        old_path = None
 
+# check the dir size every sleep_time
+# 
+# 20 * 1024 *1024
+def archive_to_tgz (srcdir='./', destdir= '/home/pi/', fold_size = 3 * 1024 *1024):
+    
+    size = util.get_FolderSize(srcdir)
+    failed = 0
+    print size
+    if size > fold_size:
+        # need to archive
+        tgz_name = destdir + '/' + util.get_systime() + '.tgz'
+        try:
+            util.zip_dir(srcdir, tgz_name)
+        except util.UtilException as e:
+            print e.msg
+            failed = 1
+        if not failed == 1:
+            util.remove_files(srcdir)
+            return tgz_name
+        else:
+            return None
+    else:
+        return None
+        
+    
+# todo
+# start 2 thread
+# 1 for capture images to some where
+# 2 for check the file size and archive them
+#dirname
+#sleep_time
+class cap_Thread(threading.Thread):
+    def __init__(self, dirname , sleep_time=1):
+        threading.Thread.__init__(self)
+        self.dirname = dirname
+        self.sleep_time = sleep_time
+        self.cap = CapImage(0, dirname)
+        
+    def run(self):
+        print "Starting capture" + self.dirname
+        while True:
+            threadLock.acquire()
+            cap_to_local_dir(self.cap)
+            threadLock.release()
+            time.sleep(self.sleep_time)
+
+#srcname
+#destname
+#size
+#sleep_time
+class archive_Trhead(threading.Thread):
+    def __init__(self, srcname, destname, size, sleep_time=100):
+        threading.Thread.__init__(self)
+        self.srcname = srcname
+        self.destdir = destname
+        self.size = size
+        self.sleep_time = sleep_time
+        
+    def run(self):
+         print "Starting Archive..." + self.srcname
+         while True:
+            threadLock.acquire()
+            filename = archive_to_tgz(self.srcname, self.destdir, self.size)
+            if not filename == None:
+                logger.info("Archive to %s", filename)
+            threadLock.release()
+            time.sleep(self.sleep_time)
+         
+def test():
+    thread_cap = cap_Thread("/home/pi/images/", 2)
+    thread_archive = archive_Trhead("/home/pi/images/", '/home/pi/', 3*100*100)
+    thread_cap.start()
+    thread_archive.start()
+    
+    thread_cap.join()  
+    thread_archive.join()
+    print "Exiting Main Thread"
 
 if __name__ == '__main__':
 	#
     #main()
-    cap_to_local_dir(dir='/home/pi/images/',sleep_time=1)
+    #cap_to_local_dir(dir='/home/pi/images/',sleep_time=1)
+    test()
 
