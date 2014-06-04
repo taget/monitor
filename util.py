@@ -20,7 +20,7 @@ class UtilException(Exception):
 
 # return str of system time
 def get_systime():
-    return str(time.time())
+    return str(time.strftime("%Y-%m-%d-%H-%M-%s"))
 
 # remove a file    
 def remove_file(path):
